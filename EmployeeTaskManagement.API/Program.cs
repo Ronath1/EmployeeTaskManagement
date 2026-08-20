@@ -1,4 +1,12 @@
+using EmployeeTaskManagement.API.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
+using System.Runtime.CompilerServices;
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));    // builder.Services<- This is where we register services for Dependency Injection.
+
 
 // Add services to the container.
 
@@ -25,3 +33,15 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+/*  Important Concepts
+builder.Services
+This is where we register services for Dependency Injection.
+AddDbContext<AppDbContext>()
+This tells ASP.NET Core:
+When something asks for AppDbContext, create one.
+UseSqlServer(...)
+This tells EF Core to use SQL Server.
+builder.Configuration.GetConnectionString("DefaultConnection")
+This reads the connection string from appsettings.json.   */
