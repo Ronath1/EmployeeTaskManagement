@@ -59,6 +59,42 @@ namespace EmployeeTaskManagement.API.Controllers
 
             return CreatedAtAction(nameof(GetEmployeeById), new { id = employee.Id }, employee);  // This returns HTTP status code 201 Created with the location of the newly created employee.
         }
-        
+
+        [HttpPut("{id}")]
+
+        public IActionResult UpdateEmployee(int id, Employee updatedEmployee) //This means the method can return different HTTP responses, like: 404 Not Found  or  204 No Content  
+                                                                              // updatedEmployee <-This comes from the JSON body of the request.
+        {
+            var employee = Employees.FirstOrDefault(e => e.Id == id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
+            employee.FirstName = updatedEmployee.FirstName;
+            employee.LastName = updatedEmployee.LastName;
+            employee.Email = updatedEmployee.Email;
+            employee.Phone = updatedEmployee.Phone;
+            employee.Position = updatedEmployee.Position;
+            employee.HireDate = updatedEmployee.HireDate;
+
+            return NoContent(); // This returns HTTP status code 204 No Content to indicate the update was successful.
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteEmployee(int id)
+        {
+        var employee = Employees.FirstOrDefault(e => e.Id == id);
+        if(employee == null)
+        {
+                return NotFound();
+        }
+
+            Employees.Remove(employee);
+
+            return NoContent();
+
+
+        }
+
     }
 }
