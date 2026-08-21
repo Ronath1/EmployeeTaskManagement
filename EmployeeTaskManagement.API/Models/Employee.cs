@@ -26,7 +26,9 @@ namespace EmployeeTaskManagement.API.Models
 
     public int? DepartmentId { get; set; }  //This is a foreign key that links the employee to a department. It can be null if the employee is not assigned to any department.
 
-    public Department? Department { get; set; }  //This is a navigation property that allows us to access the department details of the employee. It can be null if the employee is not assigned to any department.
+    public Department? Department { get; set; }
+
+    public List<WorkTask> Tasks { get; set; } = new();//This is a navigation property that allows us to access the department details of the employee. It can be null if the employee is not assigned to any department.
 
     }
 }

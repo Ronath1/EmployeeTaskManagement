@@ -23,5 +23,7 @@ namespace EmployeeTaskManagement.API.Models
         public int? ManagerId { get; set; }
 
         public Employee? Manager { get; set; }
+
+        public List<WorkTask> Tasks { get; set; } = new();
     }
 }
