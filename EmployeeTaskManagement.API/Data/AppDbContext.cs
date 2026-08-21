@@ -13,6 +13,8 @@ namespace EmployeeTaskManagement.API.Data
         {
         }
         public DbSet<Employee> Employees { get; set; }  // This represents the Employees table in the database.
+        public DbSet<Department> Departments { get; set; }  // This represents the Departments table in the database.
+        public DbSet<Project> Projects { get; set; }  // This represents the Projects table in the database.
 
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using EmployeeTaskManagement.API.Models;
 using EmployeeTaskManagement.API.Data;
 
@@ -49,7 +50,9 @@ namespace EmployeeTaskManagement.API.Controllers
         [HttpGet]  // This means this method handles HTTP GET requests.
         public ActionResult<List<Employee>> GetEmployees()  // This means the method returns an HTTP response containing a list of employees.
         {
-        var employees = _context.Employees.ToList();  //This reads all employees from the database and converts them into a list.
+        var employees = _context.Employees   //This reads all employees from the database and converts them into a list.
+                  .Include(e => e.Department)
+                  .ToList();  
 
             return Ok(employees); // This returns HTTP status code 200 OK with the employee list.
         }
@@ -59,7 +62,9 @@ namespace EmployeeTaskManagement.API.Controllers
         [HttpGet("{id}")]
         public ActionResult<Employee> GetEmployeeById(int id)
         {
-            var employee = _context.Employees.FirstOrDefault(e => e.Id == id);  //This is a LINQ method(FirstOrDefault). It searches the list and returns the first employee where:e.Id == id. If no employee is found, it returns null.
+            var employee = _context.Employees
+            .Include(e => e.Department)
+            .FirstOrDefault(e => e.Id == id);  //This is a LINQ method(FirstOrDefault). It searches the list and returns the first employee where:e.Id == id. If no employee is found, it returns null.
             if (employee == null)
             {
                 return NotFound(); // This returns HTTP status code 404 Not Found if the employee is not found.
@@ -71,7 +76,7 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpPost]
-        public ActionResult<Employee> CreateEmployees(Employee employee) //ASP.NET Core reads the JSON body from the request and converts it into an Employee object.
+        public ActionResult<Employee> CreateEmployee(Employee employee) //ASP.NET Core reads the JSON body from the request and converts it into an Employee object.
         {
             _context.Employees.Add(employee);  //This adds the new employee to the database context.
             _context.SaveChanges();  //This saves the changes to the database. Until this is called, the employee is not actually stored in SQL Server.
@@ -99,6 +104,7 @@ namespace EmployeeTaskManagement.API.Controllers
             employee.Phone = updatedEmployee.Phone;
             employee.Position = updatedEmployee.Position;
             employee.HireDate = updatedEmployee.HireDate;
+            employee.DepartmentId = updatedEmployee.DepartmentId;
 
             _context.SaveChanges();  //This saves the changes to the database. Until this is called, the employee is not actually updated in SQL Server.
 
