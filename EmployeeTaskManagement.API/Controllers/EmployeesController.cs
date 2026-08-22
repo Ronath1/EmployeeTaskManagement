@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using EmployeeTaskManagement.API.Models;
 using EmployeeTaskManagement.API.Data;
+using EmployeeTaskManagement.API.DTOs;
 
 namespace EmployeeTaskManagement.API.Controllers
 {
@@ -48,40 +49,84 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpGet]  // This means this method handles HTTP GET requests.
-        public ActionResult<List<Employee>> GetEmployees()  // This means the method returns an HTTP response containing a list of employees.
+        public ActionResult<List<EmployeeDto>> GetEmployees()
         {
-        var employees = _context.Employees   //This reads all employees from the database and converts them into a list.
-                  .Include(e => e.Department)
-                  .ToList();  
+        var employees = _context.Employees.Include(e =>e.Department).Select(e=>new  EmployeeDto
+        {
+        Id=e.Id,
+            FirstName = e.FirstName,
+            LastName = e.LastName,
+            Email = e.Email,
+            Phone = e.Phone,
+            Position = e.Position,
+            HireDate = e.HireDate,
+            DepartmentId = e.DepartmentId,
+            DepartmentName = e.Department != null ? e.Department.Name : null
+        }
+        ) .ToList();
 
-            return Ok(employees); // This returns HTTP status code 200 OK with the employee list.
+         return Ok(employees);  // This returns HTTP status code 200 OK with the list of employees.
         }
 
 
 
         [HttpGet("{id}")]
-        public ActionResult<Employee> GetEmployeeById(int id)
+        public ActionResult<EmployeeDto> GetEmployeeById(int id)
         {
-            var employee = _context.Employees
-            .Include(e => e.Department)
-            .FirstOrDefault(e => e.Id == id);  //This is a LINQ method(FirstOrDefault). It searches the list and returns the first employee where:e.Id == id. If no employee is found, it returns null.
-            if (employee == null)
+            var employee = _context.Employees.Include(e => e.Department).Where(e => e.Id == id).Select(e => new EmployeeDto
             {
-                return NotFound(); // This returns HTTP status code 404 Not Found if the employee is not found.
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                Email = e.Email,
+                Phone = e.Phone,
+                Position = e.Position,
+                HireDate = e.HireDate,
+                DepartmentId = e.DepartmentId,
+                DepartmentName = e.Department != null ? e.Department.Name : null
+
+            })
+            .FirstOrDefault();
+
+            if(employee == null)
+            {
+            return NotFound();
             }
-            return Ok(employee); // This returns HTTP status code 200 OK with the employee data.
+
+            return Ok(employee);  // This returns HTTP status code 200 OK with the employee data if found, or 404 Not Found if not found.
         }
 
 
 
 
         [HttpPost]
-        public ActionResult<Employee> CreateEmployee(Employee employee) //ASP.NET Core reads the JSON body from the request and converts it into an Employee object.
+        public ActionResult<EmployeeDto> CreateEmployee(CreateEmployeeDto createEmployeeDto)
         {
-            _context.Employees.Add(employee);  //This adds the new employee to the database context.
-            _context.SaveChanges();  //This saves the changes to the database. Until this is called, the employee is not actually stored in SQL Server.
+            var employee = new Employee
+            {
+                FirstName = createEmployeeDto.FirstName,
+                LastName = createEmployeeDto.LastName,
+                Email = createEmployeeDto.Email,
+                Phone = createEmployeeDto.Phone,
+                Position = createEmployeeDto.Position,
+                HireDate = createEmployeeDto.HireDate,
+                DepartmentId = createEmployeeDto.DepartmentId
+            };
+            _context.Employees.Add(employee);
+            _context.SaveChanges();  //This saves the new employee to the database. Until this is called, the employee is not actually added to SQL Server.
 
-            return CreatedAtAction(nameof(GetEmployeeById), new { id = employee.Id }, employee);  // This returns HTTP status code 201 Created with the location of the newly created employee.
+            var employeeDto = new EmployeeDto
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Email = employee.Email,
+                Phone = employee.Phone,
+                Position = employee.Position,
+                HireDate = employee.HireDate,
+                DepartmentId = employee.DepartmentId
+            };
+            return CreatedAtAction(nameof(GetEmployeeById), new { id = employee.Id }, employeeDto);  // This returns HTTP status code 201 Created with the location of the new employee and the employee data.
         }
 
 
@@ -90,27 +135,27 @@ namespace EmployeeTaskManagement.API.Controllers
 
         [HttpPut("{id}")]
 
-        public IActionResult UpdateEmployee(int id, Employee updatedEmployee) //This means the method can return different HTTP responses, like: 404 Not Found  or  204 No Content  
-                                                                              // updatedEmployee <-This comes from the JSON body of the request.
+        public IActionResult UpdateEmployee(int id, UpdateEmployeeDto updatedEmployeeDto)
         {
             var employee = _context.Employees.FirstOrDefault(e => e.Id == id);
-            if (employee == null)
+
+            if(employee == null)
             {
                 return NotFound();
             }
-            employee.FirstName = updatedEmployee.FirstName;
-            employee.LastName = updatedEmployee.LastName;
-            employee.Email = updatedEmployee.Email;
-            employee.Phone = updatedEmployee.Phone;
-            employee.Position = updatedEmployee.Position;
-            employee.HireDate = updatedEmployee.HireDate;
-            employee.DepartmentId = updatedEmployee.DepartmentId;
 
-            _context.SaveChanges();  //This saves the changes to the database. Until this is called, the employee is not actually updated in SQL Server.
+            employee.FirstName = updatedEmployeeDto.FirstName;
+            employee.LastName = updatedEmployeeDto.LastName;
+            employee.Email = updatedEmployeeDto.Email;
+            employee.Phone = updatedEmployeeDto.Phone;
+            employee.Position = updatedEmployeeDto.Position;
+            employee.HireDate = updatedEmployeeDto.HireDate;
+            employee.DepartmentId = updatedEmployeeDto.DepartmentId;
 
-            return NoContent(); // This returns HTTP status code 204 No Content to indicate the update was successful.
+            _context.SaveChanges();  //This saves the updated employee to the database.
+            return NoContent();  // This returns HTTP status code 204 No Content, indicating the update was successful but there's no content to return.`
         }
-
+        
 
 
 
