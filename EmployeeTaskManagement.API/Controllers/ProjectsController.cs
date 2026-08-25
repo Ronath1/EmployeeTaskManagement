@@ -3,6 +3,7 @@ using EmployeeTaskManagement.API.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using EmployeeTaskManagement.API.DTOs;
 
 namespace EmployeeTaskManagement.API.Controllers
 {
@@ -19,18 +20,49 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpGet]
-        public ActionResult<List<Project>> GetProjects()
+        public ActionResult<List<ProjectDto>> GetProjects()
         {
-            var projects = _context.Projects.Include(p => p.Manager).ToList();
-            return Ok(projects);
+        var projects = _context.Projects.Select(p => new ProjectDto
+        {
+          Id = p.Id,
+          Name = p.Name,
+          Description = p.Description,
+          StartDate = p.StartDate,
+          EndDate = p.EndDate,
+          Status = p.Status,
+          ManagerId = p.ManagerId,
+          ManagerName = p.Manager !=null
+               ? p.Manager.FirstName + " " + p.Manager.LastName
+               : null,
+               TaskCount = p.Tasks.Count
+
+        })
+
+        .ToList();
+
+        return Ok(projects);
         }
 
 
 
         [HttpGet("{id}")]
-        public ActionResult<Project> GetProjectById(int id)
+        public ActionResult<ProjectDto> GetProjectById(int id)
         {
-            var project = _context.Projects.Include(p => p.Manager).FirstOrDefault(p => p.Id == id);
+            var project = _context.Projects.Where(p => p.Id == id).Select(p => new ProjectDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate,
+                Status = p.Status,
+                ManagerId = p.ManagerId,
+                ManagerName = p.Manager != null
+                    ? p.Manager.FirstName + " " + p.Manager.LastName
+                    : null,
+                TaskCount = p.Tasks.Count
+            })
+            .FirstOrDefault();
 
             if (project == null)
             {
@@ -41,56 +73,71 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Project> CreateProject(Project project)
+        public ActionResult<ProjectDto> CreateProject(CreateProjectDto createProjectDto)
         {
+            var project = new Project
+            {
+                Name = createProjectDto.Name,
+                Description = createProjectDto.Description,
+                StartDate = createProjectDto.StartDate,
+                EndDate = createProjectDto.EndDate,
+                Status = createProjectDto.Status,
+                ManagerId = createProjectDto.ManagerId
+            };
             _context.Projects.Add(project);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, project);
-
-
+            var projectDto = new ProjectDto
+            {
+                Id = project.Id,
+                Name = project.Name,
+                Description = project.Description,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                Status = project.Status,
+                ManagerId = project.ManagerId,
+                TaskCount = 0
+            };
+            return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, projectDto);
         }
 
+
         [HttpPut("{id}")]
-        public IActionResult UpdateProject(int id, Project updatedProject)
+        public IActionResult UpdateProject(int id, UpdateProjectDto updateProjectDto)
         {
             var project = _context.Projects.FirstOrDefault(p => p.Id == id);
 
-            if (project == null)
+            if(project == null)
             {
-                return NotFound();
+            return NotFound();
             }
 
-            project.Name = updatedProject.Name;
-            project.Description = updatedProject.Description;
-            project.StartDate = updatedProject.StartDate;
-            project.EndDate = updatedProject.EndDate;
-            project.Status = updatedProject.Status;
-            project.ManagerId = updatedProject.ManagerId;
-
+            project.Name = updateProjectDto.Name;
+            project.Description = updateProjectDto.Description;
+            project.StartDate = updateProjectDto.StartDate;
+            project.EndDate = updateProjectDto.EndDate;
+            project.Status = updateProjectDto.Status;
+            project.ManagerId = updateProjectDto.ManagerId;
             _context.SaveChanges();
 
             return NoContent();
-
         }
+
 
         [HttpDelete("{id}")]
 
-        public ActionResult DeleteProject(int id)
+        public IActionResult DelteProject(int id)
         {
             var project = _context.Projects.FirstOrDefault(p => p.Id == id);
-
             if (project == null)
             {
                 return NotFound();
-
             }
 
             _context.Projects.Remove(project);
             _context.SaveChanges();
 
             return NoContent();
-
         }
 
     }

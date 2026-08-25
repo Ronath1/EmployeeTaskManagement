@@ -1,5 +1,6 @@
 ﻿using EmployeeTaskManagement.API.Data;
 using EmployeeTaskManagement.API.Models;
+using EmployeeTaskManagement.API.DTOs;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,63 +19,93 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<Department>> GetDepartments()
+        public ActionResult<List<DepartmentDto>> GetDepartments()
         {
         var departments = _context.Departments
-          .Include(d => d.Employees)
-          .ToList();
-            return Ok(departments);
+           .Select(d => new DepartmentDto
+           {
+               Id = d.Id,
+               Name = d.Name,
+               Description = d.Description,
+               EmployeeCount = d.Employees.Count
+           })
+            .ToList();
 
+            return Ok(departments);
         }
+        
 
         [HttpGet("{id}")]
-        public ActionResult<Department> GetDepartmentById(int id)
+        public ActionResult<DepartmentDto> GetDepartmentById(int id)
         {
-            var department = _context.Departments
-            .Include(d => d.Employees)
-            .FirstOrDefault(d => d.Id == id);
-
+         var department = _context.Departments.Where(d  => d.Id == id).Select(d=> new DepartmentDto
+         {
+         Id = d.Id,
+         Name=d.Name,
+         Description= d.Description,
+         EmployeeCount= d.Employees.Count
+         })
+         .FirstOrDefault();
             if (department == null)
             {
                 return NotFound();
             }
-            return Ok(department);
+            return Ok(department);  
         }
 
         [HttpPost]
-        public ActionResult<Department> CreateDepartment(Department department)
+        public ActionResult<DepartmentDto> CreateDepartment(CreateDepartmentDto createDepartmentDto)
         {
+            var department = new Department
+            {
+                Name = createDepartmentDto.Name,
+                Description = createDepartmentDto.Description
+
+            };
             _context.Departments.Add(department);
             _context.SaveChanges();
-            return CreatedAtAction(nameof(GetDepartmentById), new { id = department.Id }, department);
+
+            var departmentDto = new DepartmentDto
+            {
+                Id = department.Id,
+                Name = department.Name,
+                Description = department.Description,
+                EmployeeCount = 0
+            };
+
+            return CreatedAtAction(nameof(GetDepartmentById), new { id = department.Id }, departmentDto);
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateDepartment(int id, Department updatedDepartment)
+        public IActionResult Updatedepartment(int id, UpdateDepartmentDto updateDepartmentdto)
         {
-        var department = _context.Departments.FirstOrDefault(d => d.Id == id);
-
-        if (department == null)
+            var department = _context.Departments.FirstOrDefault(d => d.Id == id);
+            if(department == null)
             {
-                return NotFound();
+            return NotFound();
             }
 
-            department.Name = updatedDepartment.Name;
-            department.Description = updatedDepartment.Description;
+            department.Name = updateDepartmentdto.Name;
+            department.Description = updateDepartmentdto.Description;
+
             _context.SaveChanges();
+
             return NoContent();
         }
+        
 
         [HttpDelete("{id}")]
         public IActionResult DeleteDepartment(int id)
         {
-        var department = _context.Departments.FirstOrDefault(d => d.Id == id);  //Include(d => d.Employees) tells EF Core to also load employees related to each department.
-            if (department == null)
+            var department = _context.Departments.FirstOrDefault(d => d.Id == id);
+            if(department ==null)
             {
-                return NotFound();
+            return NotFound();
             }
+
             _context.Departments.Remove(department);
             _context.SaveChanges();
+
             return NoContent();
         }
     }
