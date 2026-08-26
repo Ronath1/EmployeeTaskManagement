@@ -14,12 +14,12 @@
 
         public DateTime? DueDate { get; set; }
 
-        public int? EmplyeeId { get; set; }
+        public int? EmployeeId { get; set; }
 
-        public string? employeeName { get; set; }
+        public string? EmployeeName { get; set; }
 
-        public int? ProjectName { get; set; }
+        public int? ProjectId { get; set; }
 
-        public string? Projectname { get; set; }
+        public string? ProjectName { get; set; }
     }
 }

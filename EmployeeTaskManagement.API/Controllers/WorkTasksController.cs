@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using EmployeeTaskManagement.API.Data;
 using EmployeeTaskManagement.API.Models;
 using Microsoft.EntityFrameworkCore;
+using EmployeeTaskManagement.API.DTOs;
 
 
 namespace EmployeeTaskManagement.API.Controllers
@@ -21,53 +22,156 @@ namespace EmployeeTaskManagement.API.Controllers
 
         [HttpGet]
 
-        public ActionResult<List<WorkTask>> GetWorkTasks()
-        {
-            var tasks = _context.WorkTasks.Include(t => t.Employee).Include(t => t.Project).ToList();
+        public ActionResult<List<WorkTaskDto>> GetWorkTasks()
+
+        { var tasks = _context.WorkTasks.Select(t => new WorkTaskDto
+          {
+          Id = t.Id,
+          Title = t.Title,
+          Description = t.Description,
+          Status = t.Status,
+          Priority = t.Priority,
+          DueDate = t.DueDate,
+          EmployeeId = t.EmployeeId,
+          EmployeeName = t.Employee !=null
+             ? t.Employee.FirstName + " " + t.Employee.LastName : null,
+           ProjectId = t.ProjectId,
+           ProjectName = t.Project != null? t.Project.Name : null
+          }
+        
+        )
+        .ToList();
 
             return Ok(tasks);
-
         }
 
+
+
+        
+
         [HttpGet("{id}")]
-
-        public ActionResult<WorkTask> GetWorkTaskById(int id)
+        public ActionResult<WorkTaskDto> GetWorkTaskById(int id)
         {
-            var tasks = _context.WorkTasks.Include(t => t.Employee).Include(t => t.Project).FirstOrDefault(t => t.Id == id);
+            var task = _context.WorkTasks
+                .Where(t => t.Id == id)
+                .Select(t => new WorkTaskDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    Status = t.Status,
+                    Priority = t.Priority,
+                    DueDate = t.DueDate,
+                    EmployeeId = t.EmployeeId,
+                    EmployeeName = t.Employee != null
+                        ? t.Employee.FirstName + " " + t.Employee.LastName
+                        : null,
+                    ProjectId = t.ProjectId,
+                    ProjectName = t.Project != null ? t.Project.Name : null
+                })
+                .FirstOrDefault();
 
-            if(tasks == null)
+            if (task == null)
             {
                 return NotFound();
             }
 
-            return Ok(tasks);
+            return Ok(task);
         }
 
         [HttpPost]
-        public ActionResult<WorkTask> CreateWorkTask(WorkTask task)
-        {
+        public ActionResult<WorkTaskDto> CreateWorkTask(CreateWorkTaskDto createWorkTaskDto)
+        {   
+
+            if(createWorkTaskDto.EmployeeId.HasValue)
+            {
+                var employeeExists = _context.Employees.Any(e => e.Id == createWorkTaskDto.EmployeeId.Value);
+
+                if (!employeeExists)
+                {
+                    return BadRequest("The selected employee doesnot exxist");
+                }
+                
+            }
+
+            if (createWorkTaskDto.ProjectId.HasValue)
+            {
+                var projectExists = _context.Projects.Any(p => p.Id == createWorkTaskDto.ProjectId.Value);
+
+                if (!projectExists)
+                {
+                    return BadRequest("The selected project doesnot exist");
+                }
+            }
+
+            var task = new WorkTask
+            {
+                Title = createWorkTaskDto.Title,
+                Description = createWorkTaskDto.Description,
+                Status = createWorkTaskDto.Status,
+                Priority = createWorkTaskDto.Priority,
+                DueDate = createWorkTaskDto.DueDate,
+                EmployeeId = createWorkTaskDto.EmployeeId,
+                ProjectId = createWorkTaskDto.ProjectId
+            };
+
             _context.WorkTasks.Add(task);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetWorkTaskById), new { id = task.Id }, task);
+            var taskDto = new WorkTaskDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                Status = task.Status,
+                Priority = task.Priority,
+                DueDate = task.DueDate,
+                EmployeeId = task.EmployeeId,
+                ProjectId = task.ProjectId
+            };
 
+            return CreatedAtAction(nameof(GetWorkTaskById), new { id = task.Id }, taskDto);
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateWorkTask(int id,WorkTask updatedTask)
+        public IActionResult UpdateWorkTask(int id, UpdateWorkTaskDto updateWorkTaskDto)
         {
             var task = _context.WorkTasks.FirstOrDefault(t => t.Id == id);
-            if(task  == null)
+
+            if (task == null)
             {
                 return NotFound();
             }
-            task.Title = updatedTask.Title;
-            task.Description = updatedTask.Description;
-            task.Status = updatedTask.Status;
-            task.Priority = updatedTask.Priority;
-            task.DueDate = updatedTask.DueDate;
-            task.EmployeeId = updatedTask.EmployeeId;
-            task.ProjectId = updatedTask.ProjectId;
+
+            if (updateWorkTaskDto.EmployeeId.HasValue)
+            {
+                var employeeExists = _context.Employees
+                    .Any(e => e.Id == updateWorkTaskDto.EmployeeId.Value);
+
+                if (!employeeExists)
+                {
+                    return BadRequest("The selected employee does not exist.");
+                }
+            }
+
+            if (updateWorkTaskDto.ProjectId.HasValue)
+            {
+                var projectExists = _context.Projects
+                    .Any(p => p.Id == updateWorkTaskDto.ProjectId.Value);
+
+                if (!projectExists)
+                {
+                    return BadRequest("The selected project does not exist.");
+                }
+            }
+
+            task.Title = updateWorkTaskDto.Title;
+            task.Description = updateWorkTaskDto.Description;
+            task.Status = updateWorkTaskDto.Status;
+            task.Priority = updateWorkTaskDto.Priority;
+            task.DueDate = updateWorkTaskDto.DueDate;
+            task.EmployeeId = updateWorkTaskDto.EmployeeId;
+            task.ProjectId = updateWorkTaskDto.ProjectId;
 
             _context.SaveChanges();
 
@@ -75,21 +179,19 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteWorktask(int id)
+        public IActionResult DeleteWorkTask(int id)
         {
             var task = _context.WorkTasks.FirstOrDefault(t => t.Id == id);
 
             if (task == null)
             {
                 return NotFound();
-
             }
+
             _context.WorkTasks.Remove(task);
             _context.SaveChanges();
 
             return NoContent();
-
-
         }
 
 

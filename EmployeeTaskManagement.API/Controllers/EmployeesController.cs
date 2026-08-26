@@ -48,24 +48,87 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
 
-        [HttpGet]  // This means this method handles HTTP GET requests.
-        public ActionResult<List<EmployeeDto>> GetEmployees()
+        [HttpGet]
+        public ActionResult<List<EmployeeDto>> GetEmployees(
+     string? search,
+    int? departmentId,
+    string? position,
+    string? sortBy,
+    string? sortOrder,
+    int pageNumber = 1,
+    int pageSize = 10)
         {
-        var employees = _context.Employees.Include(e =>e.Department).Select(e=>new  EmployeeDto
-        {
-        Id=e.Id,
-            FirstName = e.FirstName,
-            LastName = e.LastName,
-            Email = e.Email,
-            Phone = e.Phone,
-            Position = e.Position,
-            HireDate = e.HireDate,
-            DepartmentId = e.DepartmentId,
-            DepartmentName = e.Department != null ? e.Department.Name : null
-        }
-        ) .ToList();
+            var query = _context.Employees
+                .Include(e => e.Department)
+                .AsQueryable();
 
-         return Ok(employees);  // This returns HTTP status code 200 OK with the list of employees.
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(e =>
+                    e.FirstName.Contains(search) ||
+                    e.LastName.Contains(search) ||
+                    e.Email.Contains(search));
+            }
+
+            if (departmentId.HasValue)
+            {
+                query = query.Where(e => e.DepartmentId == departmentId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(position))
+            {
+                query = query.Where(e => e.Position.Contains(position));
+            }
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var isDescending = sortOrder?.ToLower() == "desc";
+
+                query = sortBy.ToLower() switch
+                {
+                    "firstname" => isDescending
+                        ? query.OrderByDescending(e => e.FirstName)
+                        : query.OrderBy(e => e.FirstName),
+
+                    "lastname" => isDescending
+                        ? query.OrderByDescending(e => e.LastName)
+                        : query.OrderBy(e => e.LastName),
+
+                    "email" => isDescending
+                        ? query.OrderByDescending(e => e.Email)
+                        : query.OrderBy(e => e.Email),
+
+                    "position" => isDescending
+                        ? query.OrderByDescending(e => e.Position)
+                        : query.OrderBy(e => e.Position),
+
+                    "hiredate" => isDescending
+                        ? query.OrderByDescending(e => e.HireDate)
+                        : query.OrderBy(e => e.HireDate),
+
+                    _ => query.OrderBy(e => e.Id)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(e => e.Id);
+            }
+
+            var employees = query
+                .Select(e => new EmployeeDto
+                {
+                    Id = e.Id,
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    Email = e.Email,
+                    Phone = e.Phone,
+                    Position = e.Position,
+                    HireDate = e.HireDate,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department != null ? e.Department.Name : null
+                })
+                .ToList();
+
+            return Ok(employees);
         }
 
 
@@ -102,6 +165,24 @@ namespace EmployeeTaskManagement.API.Controllers
         [HttpPost]
         public ActionResult<EmployeeDto> CreateEmployee(CreateEmployeeDto createEmployeeDto)
         {
+            var emailExists = _context.Employees.Any(e => e.Email == createEmployeeDto.Email);
+
+            if (emailExists)
+            {
+                return BadRequest("An employee with this email already exists.");
+            }
+
+            if (createEmployeeDto.DepartmentId.HasValue)
+            {
+                var departmentExists = _context.Departments
+                    .Any(d => d.Id == createEmployeeDto.DepartmentId.Value);
+
+                if (!departmentExists)
+                {
+                    return BadRequest("The selected department does not exist.");
+                }
+            }
+
             var employee = new Employee
             {
                 FirstName = createEmployeeDto.FirstName,
@@ -135,7 +216,7 @@ namespace EmployeeTaskManagement.API.Controllers
 
         [HttpPut("{id}")]
 
-        public IActionResult UpdateEmployee(int id, UpdateEmployeeDto updatedEmployeeDto)
+        public IActionResult UpdateEmployee(int id, UpdateEmployeeDto updateEmployeeDto)
         {
             var employee = _context.Employees.FirstOrDefault(e => e.Id == id);
 
@@ -144,13 +225,31 @@ namespace EmployeeTaskManagement.API.Controllers
                 return NotFound();
             }
 
-            employee.FirstName = updatedEmployeeDto.FirstName;
-            employee.LastName = updatedEmployeeDto.LastName;
-            employee.Email = updatedEmployeeDto.Email;
-            employee.Phone = updatedEmployeeDto.Phone;
-            employee.Position = updatedEmployeeDto.Position;
-            employee.HireDate = updatedEmployeeDto.HireDate;
-            employee.DepartmentId = updatedEmployeeDto.DepartmentId;
+            var emailExists = _context.Employees.Any(e => e.Email == updateEmployeeDto.Email && e.Id != id);
+
+            if (emailExists)
+            {
+                return BadRequest("Another employee with this email already exists.");
+            }
+
+            if (updateEmployeeDto.DepartmentId.HasValue)
+            {
+                var departmentExists = _context.Departments
+                    .Any(d => d.Id == updateEmployeeDto.DepartmentId.Value);
+
+                if (!departmentExists)
+                {
+                    return BadRequest("The selected department does not exist.");
+                }
+            }
+
+            employee.FirstName = updateEmployeeDto.FirstName;
+            employee.LastName = updateEmployeeDto.LastName;
+            employee.Email = updateEmployeeDto.Email;
+            employee.Phone = updateEmployeeDto.Phone;
+            employee.Position = updateEmployeeDto.Position;
+            employee.HireDate = updateEmployeeDto.HireDate;
+            employee.DepartmentId = updateEmployeeDto.DepartmentId;
 
             _context.SaveChanges();  //This saves the updated employee to the database.
             return NoContent();  // This returns HTTP status code 204 No Content, indicating the update was successful but there's no content to return.`

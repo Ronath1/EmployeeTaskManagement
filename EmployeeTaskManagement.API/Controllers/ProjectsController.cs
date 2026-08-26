@@ -74,7 +74,21 @@ namespace EmployeeTaskManagement.API.Controllers
 
         [HttpPost]
         public ActionResult<ProjectDto> CreateProject(CreateProjectDto createProjectDto)
+        
         {
+
+
+            if (createProjectDto.ManagerId.HasValue)
+            {
+                var managerExists = _context.Employees
+                    .Any(e => e.Id == createProjectDto.ManagerId.Value);
+
+                if (!managerExists)
+                {
+                    return BadRequest("The selected manager does not exist.");
+                }
+            }
+
             var project = new Project
             {
                 Name = createProjectDto.Name,
@@ -110,6 +124,16 @@ namespace EmployeeTaskManagement.API.Controllers
             if(project == null)
             {
             return NotFound();
+            }
+
+            if (updateProjectDto.ManagerId.HasValue)
+            {
+                var managerExists = _context.Employees.Any(e => e.Id == updateProjectDto.ManagerId.Value);
+
+                if (!managerExists)
+                {
+                    return BadRequest("The selected amanger does not exist");
+                }
             }
 
             project.Name = updateProjectDto.Name;
