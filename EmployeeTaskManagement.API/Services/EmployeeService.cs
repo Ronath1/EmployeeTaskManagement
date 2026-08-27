@@ -143,8 +143,34 @@ namespace EmployeeTaskManagement.API.Services
             return employee;
         }
 
-        public EmployeeDto CreateEmployee(CreateEmployeeDto createEmployeeDto)
+        public ServiceResultDto<EmployeeDto> CreateEmployee(CreateEmployeeDto createEmployeeDto)
         {
+            var emailExists = _context.Employees.Any(e => e.Email == createEmployeeDto.Email);
+
+            if (emailExists)
+            {
+                return new ServiceResultDto<EmployeeDto>
+                {
+                    Success = false,
+                    Message = "An employee with this email already exists."
+                };
+            }
+
+            if (createEmployeeDto.DepartmentId.HasValue)
+            {
+                var departmentExists = _context.Departments
+                    .Any(d => d.Id == createEmployeeDto.DepartmentId.Value);
+
+                if (!departmentExists)
+                {
+                    return new ServiceResultDto<EmployeeDto>
+                    {
+                        Success = false,
+                        Message = "The selected department does not exist."
+                    };
+                }
+            }
+
             var employee = new Employee
             {
                 FirstName = createEmployeeDto.FirstName,
@@ -159,7 +185,7 @@ namespace EmployeeTaskManagement.API.Services
             _context.Employees.Add(employee);
             _context.SaveChanges();
 
-            return new EmployeeDto
+            var employeeDto = new EmployeeDto
             {
                 Id = employee.Id,
                 FirstName = employee.FirstName,
@@ -170,15 +196,52 @@ namespace EmployeeTaskManagement.API.Services
                 HireDate = employee.HireDate,
                 DepartmentId = employee.DepartmentId
             };
+
+            return new ServiceResultDto<EmployeeDto>
+            {
+                Success = true,
+                Data = employeeDto
+            };
         }
 
-        public bool UpdateEmployee(int id, UpdateEmployeeDto updateEmployeeDto)
+        public ServiceResultDto<bool> UpdateEmployee(int id, UpdateEmployeeDto updateEmployeeDto)
         {
             var employee = _context.Employees.FirstOrDefault(e => e.Id == id);
 
             if (employee == null)
             {
-                return false;
+                return new ServiceResultDto<bool>
+                {
+                    Success = false,
+                    Message = "Employee not found."
+                };
+            }
+
+            var emailExists = _context.Employees
+                .Any(e => e.Email == updateEmployeeDto.Email && e.Id != id);
+
+            if (emailExists)
+            {
+                return new ServiceResultDto<bool>
+                {
+                    Success = false,
+                    Message = "Another employee with this email already exists."
+                };
+            }
+
+            if (updateEmployeeDto.DepartmentId.HasValue)
+            {
+                var departmentExists = _context.Departments
+                    .Any(d => d.Id == updateEmployeeDto.DepartmentId.Value);
+
+                if (!departmentExists)
+                {
+                    return new ServiceResultDto<bool>
+                    {
+                        Success = false,
+                        Message = "The selected department does not exist."
+                    };
+                }
             }
 
             employee.FirstName = updateEmployeeDto.FirstName;
@@ -191,7 +254,11 @@ namespace EmployeeTaskManagement.API.Services
 
             _context.SaveChanges();
 
-            return true;
+            return new ServiceResultDto<bool>
+            {
+                Success = true,
+                Data = true
+            };
         }
 
         public bool DeleteEmployee(int id)

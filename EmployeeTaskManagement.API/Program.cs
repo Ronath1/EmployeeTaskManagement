@@ -1,3 +1,4 @@
+using EmployeeTaskManagement.API.Services;
 using EmployeeTaskManagement.API.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));    // builder.Services<- This is where we register services for Dependency Injection.
-
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 
 builder.Services.AddControllers();

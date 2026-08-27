@@ -15,9 +15,9 @@ namespace EmployeeTaskManagement.API.Services
 
         EmployeeDto? GetEmployeeById(int id);
 
-        EmployeeDto CreateEmployee(CreateEmployeeDto createEmployeeDto);
+        ServiceResultDto<EmployeeDto> CreateEmployee(CreateEmployeeDto createEmployeeDto);
 
-        bool UpdateEmployee(int id, UpdateEmployeeDto updateEmployeeDto);
+        ServiceResultDto<bool> UpdateEmployee(int id, UpdateEmployeeDto updateEmployeeDto);
 
         bool DeleteEmployee(int id);
     }
