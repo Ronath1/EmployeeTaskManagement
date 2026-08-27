@@ -21,33 +21,63 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpGet]
+        public ActionResult<List<WorkTaskDto>> GetWorkTasks(
+     string? search,
+     string? status,
+     string? priority,
+     int? employeeId,
+     int? projectId)
+        {
+            var query = _context.WorkTasks.AsQueryable();
 
-        public ActionResult<List<WorkTaskDto>> GetWorkTasks()
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(t =>
+                    t.Title.Contains(search) ||
+                    (t.Description != null && t.Description.Contains(search)));
+            }
 
-        { var tasks = _context.WorkTasks.Select(t => new WorkTaskDto
-          {
-          Id = t.Id,
-          Title = t.Title,
-          Description = t.Description,
-          Status = t.Status,
-          Priority = t.Priority,
-          DueDate = t.DueDate,
-          EmployeeId = t.EmployeeId,
-          EmployeeName = t.Employee !=null
-             ? t.Employee.FirstName + " " + t.Employee.LastName : null,
-           ProjectId = t.ProjectId,
-           ProjectName = t.Project != null? t.Project.Name : null
-          }
-        
-        )
-        .ToList();
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(t => t.Status == status);
+            }
+
+            if (!string.IsNullOrWhiteSpace(priority))
+            {
+                query = query.Where(t => t.Priority == priority);
+            }
+
+            if (employeeId.HasValue)
+            {
+                query = query.Where(t => t.EmployeeId == employeeId.Value);
+            }
+
+            if (projectId.HasValue)
+            {
+                query = query.Where(t => t.ProjectId == projectId.Value);
+            }
+
+            var tasks = query
+                .Select(t => new WorkTaskDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    Status = t.Status,
+                    Priority = t.Priority,
+                    DueDate = t.DueDate,
+                    EmployeeId = t.EmployeeId,
+                    EmployeeName = t.Employee != null
+                        ? t.Employee.FirstName + " " + t.Employee.LastName
+                        : null,
+                    ProjectId = t.ProjectId,
+                    ProjectName = t.Project != null ? t.Project.Name : null
+                })
+                .ToList();
 
             return Ok(tasks);
         }
 
-
-
-        
 
         [HttpGet("{id}")]
         public ActionResult<WorkTaskDto> GetWorkTaskById(int id)

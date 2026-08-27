@@ -49,7 +49,7 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpGet]
-        public ActionResult<List<EmployeeDto>> GetEmployees(
+        public ActionResult<PagedResultDto<EmployeeDto>> GetEmployees(
      string? search,
     int? departmentId,
     string? position,
@@ -113,6 +113,19 @@ namespace EmployeeTaskManagement.API.Controllers
                 query = query.OrderBy(e => e.Id);
             }
 
+            var totalCount = query.Count();
+
+            if (pageNumber < 1)
+            {
+                pageNumber = 1;
+            }
+
+            if (pageSize < 1)
+            {
+                pageSize = 10;
+            }
+
+
             var employees = query
                 .Select(e => new EmployeeDto
                 {
@@ -128,7 +141,18 @@ namespace EmployeeTaskManagement.API.Controllers
                 })
                 .ToList();
 
-            return Ok(employees);
+            var result = new PagedResultDto<EmployeeDto>
+            {
+                Items = employees,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return Ok(result);
+
+            
         }
 
 

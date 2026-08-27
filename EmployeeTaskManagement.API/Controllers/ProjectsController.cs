@@ -20,27 +20,48 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpGet]
-        public ActionResult<List<ProjectDto>> GetProjects()
+        public ActionResult<List<ProjectDto>> GetProjects(
+    string? search,
+    string? status,
+    int? managerId)
         {
-        var projects = _context.Projects.Select(p => new ProjectDto
-        {
-          Id = p.Id,
-          Name = p.Name,
-          Description = p.Description,
-          StartDate = p.StartDate,
-          EndDate = p.EndDate,
-          Status = p.Status,
-          ManagerId = p.ManagerId,
-          ManagerName = p.Manager !=null
-               ? p.Manager.FirstName + " " + p.Manager.LastName
-               : null,
-               TaskCount = p.Tasks.Count
+            var query = _context.Projects.AsQueryable();
 
-        })
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    (p.Description != null && p.Description.Contains(search)));
+            }
 
-        .ToList();
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(p => p.Status == status);
+            }
 
-        return Ok(projects);
+            if (managerId.HasValue)
+            {
+                query = query.Where(p => p.ManagerId == managerId.Value);
+            }
+
+            var projects = query
+                .Select(p => new ProjectDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    Status = p.Status,
+                    ManagerId = p.ManagerId,
+                    ManagerName = p.Manager != null
+                        ? p.Manager.FirstName + " " + p.Manager.LastName
+                        : null,
+                    TaskCount = p.Tasks.Count
+                })
+                .ToList();
+
+            return Ok(projects);
         }
 
 
