@@ -1,10 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EmployeeTaskManagement.API.Authentication;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
+using Microsoft.EntityFrameworkCore;
 using EmployeeTaskManagement.API.Models;
 
 namespace EmployeeTaskManagement.API.Data
 
 {
-    public class AppDbContext : DbContext  //This is EF Core’s main database class.
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
 
     {
      public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)   //This receives configuration, like which database provider to use and what connection string to use.
