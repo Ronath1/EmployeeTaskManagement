@@ -2,6 +2,11 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
+import AppLayout from "./components/AppLayout";
+import EmployeesPage from "./pages/EmployeesPage";
+import DepartmentsPage from "./pages/DepartmentsPage";
+import ProjectsPage from "./pages/ProjectsPage";
+import WorkTasksPage from "./pages/WorkTasksPage";
 
 function App() {
   return (
@@ -14,11 +19,59 @@ function App() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <AppLayout>
+              <DashboardPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/employees"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <EmployeesPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/departments"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DepartmentsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ProjectsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/tasks"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <WorkTasksPage />
+            </AppLayout>
           </ProtectedRoute>
         }
       />
     </Routes>
+
+
   );
 }
 
