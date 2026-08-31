@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="EmployeeTaskManagement.API/EmployeeTaskManagement.API.csproj" />
+  <Project Path="EmployeeTaskManagement.Tests/EmployeeTaskManagement.Tests.csproj" Id="2801846b-5665-4cd3-a18e-e3826b53758f" />
 </Solution>
