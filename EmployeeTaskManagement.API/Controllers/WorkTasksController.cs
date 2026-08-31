@@ -4,12 +4,14 @@ using EmployeeTaskManagement.API.Data;
 using EmployeeTaskManagement.API.Models;
 using Microsoft.EntityFrameworkCore;
 using EmployeeTaskManagement.API.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace EmployeeTaskManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class WorkTasksController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -110,6 +112,7 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         public ActionResult<WorkTaskDto> CreateWorkTask(CreateWorkTaskDto createWorkTaskDto)
         {   
 
@@ -164,6 +167,7 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public IActionResult UpdateWorkTask(int id, UpdateWorkTaskDto updateWorkTaskDto)
         {
             var task = _context.WorkTasks.FirstOrDefault(t => t.Id == id);
@@ -209,6 +213,7 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public IActionResult DeleteWorkTask(int id)
         {
             var task = _context.WorkTasks.FirstOrDefault(t => t.Id == id);

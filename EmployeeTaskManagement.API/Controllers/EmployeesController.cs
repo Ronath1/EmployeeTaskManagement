@@ -2,12 +2,13 @@
 
 using EmployeeTaskManagement.API.DTOs;
 using EmployeeTaskManagement.API.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EmployeeTaskManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]  // This tells ASP.NET Core this class is an API controller and enables useful API behavior.
-
+    [Authorize]
     public class EmployeesController : ControllerBase  //  This gives us methods like Ok(), NotFound(), and BadRequest().
     {
         /*  private static readonly List<Employee> Employees = new()  //  This is temporary fake data stored in memory. Important: when you stop the app, this data resets. Later, SQL Server will store data permanently.
@@ -89,6 +90,7 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         public ActionResult<EmployeeDto> CreateEmployee(CreateEmployeeDto createEmployeeDto)
         {
             var result = _employeeService.CreateEmployee(createEmployeeDto);
@@ -106,6 +108,7 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public IActionResult UpdateEmployee(int id, UpdateEmployeeDto updateEmployeeDto)
         {
             var result = _employeeService.UpdateEmployee(id, updateEmployeeDto);
@@ -124,6 +127,7 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public IActionResult DeleteEmployee(int id)
         {
             var deleted = _employeeService.DeleteEmployee(id);

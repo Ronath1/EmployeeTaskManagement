@@ -1,11 +1,14 @@
-using EmployeeTaskManagement.API.Services;
-using EmployeeTaskManagement.API.Data;
-using Microsoft.EntityFrameworkCore;
 using EmployeeTaskManagement.API.Authentication;
-using Microsoft.AspNetCore.Identity;
+using EmployeeTaskManagement.API.Data;
+using EmployeeTaskManagement.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
+using EmployeeTaskManagement.API.Seeders;
+using EmployeeTaskManagement.API.Middleware;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,14 +40,37 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token."
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecuritySchemeReference("Bearer", document, null),
+            new List<string>()
+        }
+    });
+});
 
 var app = builder.Build();
+
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -61,6 +87,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    await RoleSeeder.SeedRolesAsync(scope.ServiceProvider);
+}
 
 app.Run();
 

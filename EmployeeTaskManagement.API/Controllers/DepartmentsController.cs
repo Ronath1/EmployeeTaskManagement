@@ -1,7 +1,7 @@
 ﻿using EmployeeTaskManagement.API.Data;
 using EmployeeTaskManagement.API.Models;
 using EmployeeTaskManagement.API.DTOs;
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +10,7 @@ namespace EmployeeTaskManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class DepartmentsController : ControllerBase
     {
         private readonly AppDbContext _context;

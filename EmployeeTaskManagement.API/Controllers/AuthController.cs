@@ -1,7 +1,8 @@
-﻿using EmployeeTaskManagement.API.Authentication;
-using EmployeeTaskManagement.API.DTOs;
-using Microsoft.AspNetCore.Identity;
+﻿using EmployeeTaskManagement.API.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using EmployeeTaskManagement.API.Services;
 
 namespace EmployeeTaskManagement.API.Controllers
 {
@@ -9,61 +10,92 @@ namespace EmployeeTaskManagement.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IConfiguration _configuration;
+        private readonly IAuthService _authService;
 
-        public AuthController(
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration)
+        public AuthController(IAuthService authService)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _configuration = configuration;
+            _authService = authService;
         }
 
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto registerDto)
         {
-            var allowedRoles = new[] { "Admin", "Manager", "Employee" };
+            var result = await _authService.Register(registerDto);
 
-            if (!allowedRoles.Contains(registerDto.Role))
+            if (!result.Success)
             {
-                return BadRequest("Invalid role.");
+                return BadRequest(result.Message);
             }
 
-            var userExists = await _userManager.FindByEmailAsync(registerDto.Email);
-
-            if (userExists != null)
-            {
-                return BadRequest("User with this email already exists.");
-            }
-
-            if (!await _roleManager.RoleExistsAsync(registerDto.Role))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(registerDto.Role));
-            }
-
-            var user = new ApplicationUser
-            {
-                UserName = registerDto.Email,
-                Email = registerDto.Email,
-                FullName = registerDto.FullName
-            };
-
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-            if (!result.Succeeded)
-            {
-                return BadRequest(result.Errors);
-            }
-
-            await _userManager.AddToRoleAsync(user, registerDto.Role);
-
-            return Ok("User registered successfully.");
+            return Ok(result.Data);
         }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<AuthResponseDto>> Login(LoginDto loginDto)
+        {
+            var result = await _authService.Login(loginDto);
+
+            if (!result.Success)
+            {
+                return Unauthorized(result.Message);
+            }
+
+            return Ok(result.Data);
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<CurrentUserDto>> GetCurrentUser()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var result = await _authService.GetCurrentUser(userId);
+
+            if (!result.Success)
+            {
+                return NotFound(result.Message);
+            }
+
+            return Ok(result.Data);
+        }
+
+
+        //private string GenerateJwtToken(ApplicationUser user, IList<string> roles, DateTime expiresAt)
+        //{
+        //    var claims = new List<Claim>
+        //  {
+        //new Claim(ClaimTypes.NameIdentifier, user.Id),
+        //new Claim(ClaimTypes.Email, user.Email!),
+        //new Claim(ClaimTypes.Name, user.FullName)
+        //   };
+
+        //    foreach (var role in roles)
+        //    {
+        //        claims.Add(new Claim(ClaimTypes.Role, role));
+        //    }
+
+        //    var secret = _configuration["Jwt:Secret"];
+        //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret!));
+        //    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        //    var token = new JwtSecurityToken(
+        //        issuer: _configuration["Jwt:Issuer"],
+        //        audience: _configuration["Jwt:Audience"],
+        //        claims: claims,
+        //        expires: expiresAt,
+        //        signingCredentials: credentials);
+
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
+
+
     }
+
 
 }

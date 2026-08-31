@@ -8,10 +8,12 @@ namespace EmployeeTaskManagement.API.Services
     public class EmployeeService : IEmployeeService
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<EmployeeService> _logger;
 
-        public EmployeeService(AppDbContext context)
+        public EmployeeService(AppDbContext context, ILogger<EmployeeService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public PagedResultDto<EmployeeDto> GetEmployees(
@@ -184,6 +186,7 @@ namespace EmployeeTaskManagement.API.Services
 
             _context.Employees.Add(employee);
             _context.SaveChanges();
+            _logger.LogInformation("Employee created with ID {EmployeeId}", employee.Id);
 
             var employeeDto = new EmployeeDto
             {
@@ -253,6 +256,7 @@ namespace EmployeeTaskManagement.API.Services
             employee.DepartmentId = updateEmployeeDto.DepartmentId;
 
             _context.SaveChanges();
+            _logger.LogInformation("Employee updated with ID {EmployeeId}", employee.Id);
 
             return new ServiceResultDto<bool>
             {
@@ -272,6 +276,7 @@ namespace EmployeeTaskManagement.API.Services
 
             _context.Employees.Remove(employee);
             _context.SaveChanges();
+            _logger.LogInformation("Employee deleted with ID {EmployeeId}", id); // strucured logging
 
             return true;
         }

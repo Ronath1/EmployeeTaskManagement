@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeTaskManagement.API.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EmployeeTaskManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ProjectsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -94,6 +96,7 @@ namespace EmployeeTaskManagement.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         public ActionResult<ProjectDto> CreateProject(CreateProjectDto createProjectDto)
         
         {
@@ -138,6 +141,7 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public IActionResult UpdateProject(int id, UpdateProjectDto updateProjectDto)
         {
             var project = _context.Projects.FirstOrDefault(p => p.Id == id);
@@ -170,6 +174,7 @@ namespace EmployeeTaskManagement.API.Controllers
 
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
 
         public IActionResult DelteProject(int id)
         {
