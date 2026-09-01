@@ -40,7 +40,7 @@ function App() {
       <Route
         path="/departments"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <AppLayout>
               <DepartmentsPage />
             </AppLayout>

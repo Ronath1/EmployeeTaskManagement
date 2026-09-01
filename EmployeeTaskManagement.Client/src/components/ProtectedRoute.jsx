@@ -1,9 +1,16 @@
 import { Navigate } from "react-router-dom";
-import { isAuthenticated } from "../utils/authStorage";
+import { getUser, isAuthenticated } from "../utils/authStorage";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles }) {
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && allowedRoles.length > 0) {
+    const user = getUser();
+    if (!user || !allowedRoles.includes(user.role)) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;
