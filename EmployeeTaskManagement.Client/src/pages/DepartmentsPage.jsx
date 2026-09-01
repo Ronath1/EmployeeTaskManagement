@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { getDepartments } from "../api/departmentsApi";
+import { createDepartment, getDepartments } from "../api/departmentsApi";
 
 function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   async function loadDepartments() {
     try {
@@ -25,6 +27,26 @@ function DepartmentsPage() {
     loadDepartments();
   }, []);
 
+  async function handleCreateDepartment(event) {
+    event.preventDefault();
+
+    try {
+      setError("");
+
+      await createDepartment({
+        name,
+        description,
+      });
+
+      setName("");
+      setDescription("");
+
+      await loadDepartments();
+    } catch (err) {
+      setError("Failed to create department. Admin access may be required.");
+    }
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -33,6 +55,32 @@ function DepartmentsPage() {
           <p>View company departments and employee counts.</p>
         </div>
       </div>
+
+      <form className="form-panel" onSubmit={handleCreateDepartment}>
+        <div className="form-row">
+          <div>
+            <label>Department Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Example: Engineering"
+            />
+          </div>
+
+          <div>
+            <label>Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Example: Software development team"
+            />
+          </div>
+
+          <button type="submit">Create</button>
+        </div>
+      </form>
 
       {error && <div className="error-message">{error}</div>}
 
